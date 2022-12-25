@@ -18,5 +18,8 @@ router.get('/item', itemcontroller.getitem);
 router.post('/additem', itemcontroller.additem);
 router.put('/edititem', itemcontroller.edit_item);
 // router.patch('/edititem', itemcontroller.edit_item_field);
+router.delete('/deleteitem', itemcontroller.remove_item);
+router.patch('/depositcash', usercontroller.deposit_cash);
+router.get('/searchitems', usercontroller.search_items);
 
 module.exports = router;

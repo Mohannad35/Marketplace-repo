@@ -87,7 +87,7 @@ class ItemModel {
         const exist_sell = await this.check_item_user(item_uid);
         if (!exist_sell) resolve("item owner id dosn't exist. try again with a valid user id");
       }
-      if (purchased_by){
+      if (purchased_by) {
         const exist_buy = await this.check_item_user(purchased_by);
         if ((purchased_by) && (!exist_buy)) resolve("item buyer id dosn't exist. try again with a valid user id");
       }
@@ -98,7 +98,7 @@ class ItemModel {
               db2.query("UPDATE item SET item_name=? WHERE item_id=?", [item_name, item_id],
                 (err, result) => {
                   if (err) {
-                    resolve("Database Down!")
+                    resolve("Database down!")
                     return;
                   }
                 });
@@ -112,7 +112,7 @@ class ItemModel {
               db2.query("UPDATE item SET item_state=? WHERE item_id=?", [item_state, item_id],
                 (err, result) => {
                   if (err) {
-                    resolve("Database Down!")
+                    resolve("Database down!")
                     return;
                   }
                 });
@@ -126,7 +126,7 @@ class ItemModel {
               db2.query("UPDATE item SET item_price=? WHERE item_id=?", [item_price, item_id],
                 (err, result) => {
                   if (err) {
-                    resolve("Database Down!")
+                    resolve("Database down!")
                     return;
                   }
                 });
@@ -140,7 +140,7 @@ class ItemModel {
               db2.query("UPDATE item SET sale_date=? WHERE item_id=?", [sale_date, item_id],
                 (err, result) => {
                   if (err) {
-                    resolve("Database Down!")
+                    resolve("Database down!")
                     return;
                   }
                 });
@@ -154,7 +154,7 @@ class ItemModel {
               db2.query("UPDATE item SET purchased_by=? WHERE item_id=?", [purchased_by, item_id],
                 (err, result) => {
                   if (err) {
-                    resolve("Database Down!")
+                    resolve("Database down!")
                     return;
                   }
                 });
@@ -220,6 +220,28 @@ class ItemModel {
             }
           });
       }
+    });
+  }
+  static async remove_item(item_id) {
+    return new Promise(async resolve => {
+      let exist = await this.checkitem(item_id);
+      if (!exist) resolve("Item doesn't exist")
+      const item1 = this.item(item_id);
+      db.query("DELETE FROM item where item_id=?", [item_id], (err, result) => {
+        if (!err) {
+          resolve(item1);
+        }
+        else {
+          db2.query("DELETE FROM item where item_id=?", [item_id], (err, result) => {
+            if (!err) {
+              resolve(item1);
+            }
+            else {
+              resolve("Database down!");
+            }
+          });
+        }
+      });
     });
   }
 }

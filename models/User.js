@@ -159,6 +159,57 @@ class UserModel {
       });
     })
   }
+  static async deposit_cash(login, pass, balance) {
+    return new Promise(async resolve => {
+      const login_user_result = await this.login_user(login, pass);
+      const list1 = ["Database down!", "Wrong login", "Wrong password"];
+      if (list1.includes(login_user_result)) {
+        resolve(login_user_result);
+      }
+      else if (login_user_result == "Login successfully") {
+        const user1 = await this.getuser(0, login);
+        const new_balance = user1[0].balance + balance;
+        db.query("UPDATE user SET balance=? WHERE login=?", [new_balance, login],
+          (err, result) => {
+            if (err) {
+              db2.query("UPDATE user SET balance=? WHERE login=?", [new_balance, login],
+                (err, result) => {
+                  if (err) {
+                    resolve("Database down!")
+                    return;
+                  }
+                });
+            }
+          });
+        resolve(user1);
+      }
+    });
+  }
+  static async search_items(login, pass) {
+    return new Promise(async resolve => {
+      const login_user_result = await this.login_user(login, pass);
+      const list1 = ["Database down!", "Wrong login", "Wrong password"];
+      if (list1.includes(login_user_result)) {
+        resolve(login_user_result);
+      }
+      else if (login_user_result == "Login successfully") {
+        const user1 = await this.getuser(0, login);
+        db.query("select * from item WHERE item_uid!=?", [user1[0].uid], (error, result) => {
+          if (!error) {
+            if (result.length) resolve(result);
+            resolve("No items found!");
+          }
+          db2.query("select * from item WHERE item_uid!=?", [user1[0].uid], (error, result) => {
+            if (!error) {
+              if (result.length) resolve(result);
+              resolve("No items found!");
+            }
+            else resolve("Database down!");
+          });
+        });
+      }
+    });
+  }
   static async deluser(id, login) {
     return new Promise(async resolve => {
       let exist = await this.checkuser(id, login);

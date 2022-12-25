@@ -19,7 +19,17 @@ class Validator {
     const Schema = Joi.object({
       login: Joi.string().alphanum().min(3).max(60).required(),
       password: Joi.string().min(8).max(30)
+        .pattern(new RegExp('^[a-zA-Z0-9]')).required()
+    });
+    var result = Schema.validate(account);
+    return result;
+  }
+  static validate_deposit(account) {
+    const Schema = Joi.object({
+      login: Joi.string().alphanum().min(3).max(60).required(),
+      password: Joi.string().min(8).max(30)
         .pattern(new RegExp('^[a-zA-Z0-9]')).required(),
+      balance: Joi.number().positive().precision(2).required()
     });
     var result = Schema.validate(account);
     return result;
