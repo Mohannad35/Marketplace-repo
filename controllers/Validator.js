@@ -45,7 +45,26 @@ class Validator {
     const result = Schema.validate(item);
     return result;
   }
-
+  static validate_edit_item(item) {
+    const Schema = Joi.object({
+      item_id: Joi.number().integer().positive().required(),
+      item_uid: Joi.number().integer().positive(),
+      item_name: Joi.string().min(3).max(40),
+      item_state: Joi.string().valid('new', 'sold').insensitive().empty('').default('new'),
+      item_price: Joi.number().positive().precision(2),
+      sale_date: Joi.date().min('now'),
+      purchased_by: Joi.number().positive().integer()
+    });
+    const result = Schema.validate(item);
+    return result;
+  }
+  static validate_item(item) {
+    const Schema = Joi.object({
+      item_id: Joi.number().integer().positive().required()
+    });
+    const result = Schema.validate(item);
+    return result;
+  }
 }
 
 module.exports = Validator;

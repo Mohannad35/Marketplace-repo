@@ -9,11 +9,14 @@ router.get('/', (req, res, next) => {
 })
 
 router.get('/users', usercontroller.getalluser);
-router.get('/items', itemcontroller.getitems);
-router.post('/additem', itemcontroller.additem);
 router.get('/user', usercontroller.getuser);
 router.delete('/users/:id', usercontroller.deleteuser);
 router.post('/signup', usercontroller.create_new_account);
 router.post('/login', usercontroller.login_account);
+router.get('/items', itemcontroller.getitems);
+router.get('/item', itemcontroller.getitem);
+router.post('/additem', itemcontroller.additem);
+router.put('/edititem', itemcontroller.edit_item);
+// router.patch('/edititem', itemcontroller.edit_item_field);
 
 module.exports = router;
