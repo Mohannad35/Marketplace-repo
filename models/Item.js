@@ -78,6 +78,52 @@ class ItemModel {
       });
     });
   }
+  static async get_user_items(item_uid) {
+    return new Promise(resolve => {
+      db.query("select * from item WHERE item_uid=?", [item_uid], (error, result) => {
+        if (!error) {
+          if (result.length) resolve(result);
+          else {
+            resolve(false);
+            return;
+          }
+        }
+        db2.query("select * from item WHERE item_uid=?", [item_uid], (error, result) => {
+          if (!error) {
+            if (result.length) resolve(result);
+            else {
+              resolve(false);
+              return;
+            }
+          }
+          else resolve("Database down!");
+        });
+      });
+    });
+  }
+  static async get_user_purchased_items(purchased_by) {
+    return new Promise(resolve => {
+      db.query("select * from item WHERE purchased_by=?", [purchased_by], (error, result) => {
+        if (!error) {
+          if (result.length) resolve(result);
+          else {
+            resolve(false);
+            return;
+          }
+        }
+        db2.query("select * from item WHERE purchased_by=?", [purchased_by], (error, result) => {
+          if (!error) {
+            if (result.length) resolve(result);
+            else {
+              resolve(false);
+              return;
+            }
+          }
+          else resolve("Database down!");
+        });
+      });
+    });
+  }
   static async edit_item(item_id, item_uid, item_name, item_state, item_price,
     sale_date, purchased_by) {
     return new Promise(async resolve => {
@@ -133,7 +179,35 @@ class ItemModel {
             }
           });
       }
-      if (sale_date) {
+      if (sale_date == "") {
+        db.query("UPDATE item SET sale_date=? WHERE item_id=?", [null, item_id],
+          (err, result) => {
+            if (err) {
+              db2.query("UPDATE item SET sale_date=? WHERE item_id=?", [null, item_id],
+                (err, result) => {
+                  if (err) {
+                    resolve("Database down!")
+                    return;
+                  }
+                });
+            }
+          });
+      }
+      else if (sale_date == "now") {
+        db.query("UPDATE item SET sale_date=current_timestamp WHERE item_id=?", [item_id],
+          (err, result) => {
+            if (err) {
+              db2.query("UPDATE item SET sale_date=current_timestamp WHERE item_id=?", [item_id],
+                (err, result) => {
+                  if (err) {
+                    resolve("Database down!")
+                    return;
+                  }
+                });
+            }
+          });
+      }
+      else if (sale_date) {
         db.query("UPDATE item SET sale_date=? WHERE item_id=?", [sale_date, item_id],
           (err, result) => {
             if (err) {
@@ -147,7 +221,21 @@ class ItemModel {
             }
           });
       }
-      if (purchased_by) {
+      if (purchased_by == 0) {
+        db.query("UPDATE item SET purchased_by=? WHERE item_id=?", [null, item_id],
+          (err, result) => {
+            if (err) {
+              db2.query("UPDATE item SET purchased_by=? WHERE item_id=?", [null, item_id],
+                (err, result) => {
+                  if (err) {
+                    resolve("Database down!")
+                    return;
+                  }
+                });
+            }
+          });
+      }
+      else if (purchased_by) {
         db.query("UPDATE item SET purchased_by=? WHERE item_id=?", [purchased_by, item_id],
           (err, result) => {
             if (err) {

@@ -24,6 +24,16 @@ class Validator {
     var result = Schema.validate(account);
     return result;
   }
+  static validate_purchase(account) {
+    const Schema = Joi.object({
+      login: Joi.string().alphanum().min(3).max(60).required(),
+      password: Joi.string().min(8).max(30)
+        .pattern(new RegExp('^[a-zA-Z0-9]')).required(),
+      item_id: Joi.number().integer().positive().required()
+    });
+    var result = Schema.validate(account);
+    return result;
+  }
   static validate_deposit(account) {
     const Schema = Joi.object({
       login: Joi.string().alphanum().min(3).max(60).required(),
@@ -62,8 +72,8 @@ class Validator {
       item_name: Joi.string().min(3).max(40),
       item_state: Joi.string().valid('new', 'sold').insensitive().empty('').default('new'),
       item_price: Joi.number().positive().precision(2),
-      sale_date: Joi.date().min('now'),
-      purchased_by: Joi.number().positive().integer()
+      sale_date: Joi.date().min('now').empty(""),
+      purchased_by: Joi.number().positive().integer().empty(0)
     });
     const result = Schema.validate(item);
     return result;

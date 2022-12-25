@@ -7,9 +7,9 @@ class ItemController {
     res.send(results);
   }
   static async getitem(req, res) {
-    const validate_result = Validator.validate_item(req.body);
+    const validate_result = Validator.validate_item(req.params);
     if (validate_result.error) return res.status(400).send(validate_result.error.details[0].message);
-    const item_id = req.body.item_id;
+    const item_id = req.params.item_id;
     var db_result = await itemModel.item(item_id);
     if (db_result == false) res.status(404).send("item not found");
     else if (db_result == "Database down!") res.status(503).send(db_result);
@@ -47,9 +47,9 @@ class ItemController {
     else res.send(db_result);
   }
   static async remove_item(req, res) {
-    const validate_result = Validator.validate_item(req.body);
+    const validate_result = Validator.validate_item(req.params);
     if (validate_result.error) return res.status(400).send(validate_result.error.details[0].message);
-    const item_id = req.body.item_id;
+    const item_id = req.params.item_id;
     const db_result = await itemModel.remove_item(item_id);
     if (db_result == "Database down!") res.status(503).send(db_result);
     else if (db_result == "Item doesn't exist") res.status(404).send(db_result);

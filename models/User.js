@@ -1,5 +1,5 @@
-// const { string } = require('joi');
-const [db, db2] = require('../config/db')
+const [db, db2] = require('../config/db');
+const itemModel = require('../models/Item');
 
 class UserModel {
   static async checkuser(id = 0, login) {
@@ -159,7 +159,7 @@ class UserModel {
       });
     })
   }
-  static async deposit_cash(login, pass, balance) {
+  static async edit_cash(login, pass, balance, deposit_withdraw) {
     return new Promise(async resolve => {
       const login_user_result = await this.login_user(login, pass);
       const list1 = ["Database down!", "Wrong login", "Wrong password"];
@@ -168,7 +168,13 @@ class UserModel {
       }
       else if (login_user_result == "Login successfully") {
         const user1 = await this.getuser(0, login);
-        const new_balance = user1[0].balance + balance;
+        let new_balance;
+        if (deposit_withdraw) {
+          new_balance = user1[0].balance + balance;
+        }
+        else {
+          new_balance = user1[0].balance - balance;
+        }
         db.query("UPDATE user SET balance=? WHERE login=?", [new_balance, login],
           (err, result) => {
             if (err) {
@@ -181,7 +187,8 @@ class UserModel {
                 });
             }
           });
-        resolve(user1);
+        const new_user = await this.getuser(0, login);
+        resolve(new_user);
       }
     });
   }
@@ -207,6 +214,51 @@ class UserModel {
             else resolve("Database down!");
           });
         });
+      }
+    });
+  }
+  static async purchase_item(login, pass, item_id) {
+    return new Promise(async resolve => {
+      const login_user_result = await this.login_user(login, pass);
+      const list1 = ["Database down!", "Wrong login", "Wrong password"];
+      if (list1.includes(login_user_result)) {
+        resolve(login_user_result);
+      }
+      else if (login_user_result == "Login successfully") {
+        const user1 = await this.getuser(0, login);
+        const item1 = await itemModel.item(item_id);
+        const user2 = await this.getuser(item1[0].item_uid, null);
+        if (item1[0].item_state == "sold") {
+          resolve("item sold!");
+          return;
+        }
+        else if (item1[0].item_price > user1[0].balance){
+          resolve("Not enough balance");
+          return;
+        }
+        const new_item1 = await itemModel.edit_item(item1[0].item_id, false, false, "sold", false, "now", user1[0].uid);
+        const new_balance1 = await this.edit_cash(login, pass, item1[0].item_price, false);
+        const new_balance2 = await this.edit_cash(user2[0].login, user2[0].u_password, item1[0].item_price, true);
+        resolve([new_item1[0], new_balance1[0], new_balance2[0]]);
+      }
+    });
+  }
+  static async view_account(login, pass) {
+    return new Promise(async resolve => {
+      const login_user_result = await this.login_user(login, pass);
+      const list1 = ["Database down!", "Wrong login", "Wrong password"];
+      if (list1.includes(login_user_result)) {
+        resolve(login_user_result);
+      }
+      else if (login_user_result == "Login successfully") {
+        const user1 = await this.getuser(0, login);
+        let list1 = [];
+        let sell_items = await itemModel.get_user_items(user1[0].uid);
+        let purchased_items = await itemModel.get_user_purchased_items(user1[0].uid);
+        list1.push(user1[0]);
+        list1.push(sell_items);
+        list1.push(purchased_items);
+        resolve(list1);
       }
     });
   }

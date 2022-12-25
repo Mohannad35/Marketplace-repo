@@ -1,25 +1,21 @@
-
-const express = require('express');
 const router = require('express').Router();
 const usercontroller = require('../controllers/UserController');
 const itemcontroller = require('../controllers/ItemController');
 
-router.get('/', (req, res, next) => {
-  res.send("Hi there! From Router!");
-})
-
 router.get('/users', usercontroller.getalluser);
-router.get('/user', usercontroller.getuser);
-router.delete('/users/:id', usercontroller.deleteuser);
-router.post('/signup', usercontroller.create_new_account);
-router.post('/login', usercontroller.login_account);
+router.get('/users/user/:uid', usercontroller.getuser);
+router.get('/users/userl/:login', usercontroller.getuser);
+router.post('/users/signup', usercontroller.create_new_account);
+router.post('/users/login', usercontroller.login_account);
+router.patch('/users/depositcash', usercontroller.deposit_cash);
+router.delete('/users/delete/:id', usercontroller.deleteuser);
+router.get('/searchitems/:login/:password', usercontroller.search_items);
+router.post('/Purchase_item', usercontroller.Purchase_item);
+router.get('/users/view_account/:login/:password', usercontroller.view_account);
 router.get('/items', itemcontroller.getitems);
-router.get('/item', itemcontroller.getitem);
-router.post('/additem', itemcontroller.additem);
-router.put('/edititem', itemcontroller.edit_item);
-// router.patch('/edititem', itemcontroller.edit_item_field);
-router.delete('/deleteitem', itemcontroller.remove_item);
-router.patch('/depositcash', usercontroller.deposit_cash);
-router.get('/searchitems', usercontroller.search_items);
+router.get('/items/item/:item_id', itemcontroller.getitem);
+router.post('/items/add', itemcontroller.additem);
+router.put('/items/edit', itemcontroller.edit_item);
+router.delete('/items/delete/:item_id', itemcontroller.remove_item);
 
 module.exports = router;
