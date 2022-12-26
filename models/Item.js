@@ -231,24 +231,24 @@ class ItemModel {
         resolve(login_user_result);
       }
       else if (login_user_result == "Login successfully") {
+        const error_flag = false;
         const user1 = await this.get_user_login(login, password);
         if (user1.uid != item1.item_uid) {
           resolve("you can only delete your items.");
           return;
         }
         db.query("DELETE FROM item where item_id=?", [item_id], (err, result) => {
-          if (!err) {
-            resolve(item1);
-          }
-          else {
-            db2.query("DELETE FROM item where item_id=?", [item_id], (err, result) => {
-              if (!err) {
-                resolve(item1);
-              }
-              else {
-                resolve("Database down!");
-              }
-            });
+          db2.query("DELETE FROM item where item_id=?", [item_id], (err, result) => {
+            if (!err) {
+              resolve(item1);
+              return;
+            }
+            else {
+              error_flag = true;
+            }
+          });
+          if (err && error_flag) {
+            resolve("Database down!");
           }
         });
       }

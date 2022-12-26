@@ -299,19 +299,19 @@ class UserModel {
       if (!exist) resolve("User dosn't exist")
       if (id) {
         const user1 = this.getuser(id);
+        const error_flag = false;
         db.query("DELETE FROM user where uid=?", [id], (err, result) => {
-          if (!err) {
-            resolve(user1);
-          }
-          else {
-            db2.query("DELETE FROM user where uid=?", [id], (err, result) => {
-              if (!err) {
-                resolve(user1);
-              }
-              else {
-                resolve("Database down!");
-              }
-            });
+          db2.query("DELETE FROM user where uid=?", [id], (err, result) => {
+            if (!err) {
+              resolve(user1);
+              return;
+            }
+            else {
+              error_flag = true;
+            }
+          });
+          if (err && error_flag) {
+            resolve("Database down!");
           }
         });
       }
@@ -323,19 +323,19 @@ class UserModel {
           return;
         }
         else {
+          const error_flag = false;
           db.query("DELETE FROM user where login=?", [login], (err, result) => {
-            if (!err) {
-              resolve(user1);
-            }
-            else {
-              db2.query("DELETE FROM user where login=?", [login], (err, result) => {
-                if (!err) {
-                  resolve(user1);
-                }
-                else {
-                  resolve("Database down!");
-                }
-              });
+            db2.query("DELETE FROM user where login=?", [login], (err, result) => {
+              if (!err) {
+                resolve(user1);
+                return;
+              }
+              else {
+                error_flag = true;
+              }
+            });
+            if (err && error_flag) {
+              resolve("Database down!");
             }
           });
         }
