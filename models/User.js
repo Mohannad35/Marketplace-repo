@@ -1,7 +1,8 @@
 const [db, db2] = require('../config/db');
-const itemModel = require('../models/Item');
+const itemModel = require('./Item');
 
 class UserModel {
+
   static async checkuser(id = 0, login) {
     return new Promise(resolve => {
       if (id) {
@@ -20,20 +21,22 @@ class UserModel {
           }
         });
       }
-      db.query("select * from user where login=?", [login], (error, result) => {
-        if (!error) {
-          if (result.length) resolve(true);
-          resolve(false);
-        }
-        else {
-          db2.query("select * from user where login=?", [login], (error, result) => {
-            if (!error) {
-              if (result.length) resolve(true);
-              resolve(false);
-            }
-          });
-        }
-      });
+      else {
+        db.query("select * from user where login=?", [login], (error, result) => {
+          if (!error) {
+            if (result.length) resolve(true);
+            resolve(false);
+          }
+          else {
+            db2.query("select * from user where login=?", [login], (error, result) => {
+              if (!error) {
+                if (result.length) resolve(true);
+                resolve(false);
+              }
+            });
+          }
+        });
+      }
     });
   }
   static async getusers() {
@@ -53,34 +56,54 @@ class UserModel {
       });
     });
   }
-  static async getuser(id, login) {
+  static async getuser(id) {
     return new Promise(resolve => {
-      if (id) {
-        db.query("select * from user where uid=?", [id], (error, result) => {
-          if (!error) {
-            if (result.length) resolve(result);
-            resolve("User not found");
-          }
-          else {
-            db2.query("select * from user where uid=?", [id], (error, result) => {
-              if (!error) {
-                if (result.length) resolve(result);
-                resolve("User not found");
-              }
-            });
-          }
-        });
-      }
-      db.query("select * from user where login=?", [login], (error, result) => {
+      db.query("select * from user where uid=?", [id], (error, result) => {
         if (!error) {
-          if (result.length) resolve(result);
+          if (result.length) resolve(result[0]);
           resolve("User not found");
         }
         else {
-          db2.query("select * from user where login=?", [login], (error, result) => {
+          db2.query("select * from user where uid=?", [id], (error, result) => {
             if (!error) {
-              if (result.length) resolve(result);
+              if (result.length) resolve(result[0]);
               resolve("User not found");
+            }
+          });
+        }
+      });
+    });
+  }
+  static async get_user_login(login, password) {
+    return new Promise(resolve => {
+      db.query("select * from user where login = ?", [login], (err, result) => {
+        if (!err) {
+          if (result.length) {
+            if (result[0].u_password == password) {
+              resolve(result[0]);
+              return;
+            }
+            else {
+              resolve("Wrong password");
+              return;
+            }
+          }
+          resolve("Wrong login");
+        }
+        else {
+          db2.query("select * from user where login = ?", [login], (err, result) => {
+            if (!err) {
+              if (result.length) {
+                if (result[0].u_password == password) {
+                  resolve(result[0]);
+                  return;
+                }
+                else resolve("Wrong password");
+              }
+              resolve("Wrong login");
+            }
+            else {
+              resolve("Database down!");
             }
           });
         }
@@ -96,15 +119,17 @@ class UserModel {
       }
       if (id) {
         db.query("INSERT INTO user (uid, u_name, login, balance, u_password) VALUES (?,?,?,?,?)",
-          [id, name, login, balance, pass], (err, result) => {
+          [id, name, login, balance, pass], async (err, result) => {
             if (!err) {
-              resolve("Created successfully");
+              const user1 = await this.getuser(id);
+              resolve(user1);
             }
             else {
               db2.query("INSERT INTO user (uid, u_name, login, balance, u_password) VALUES (?,?,?,?,?)",
-                [id, name, login, balance, pass], (err, result) => {
+                [id, name, login, balance, pass], async (err, result) => {
                   if (!err) {
-                    resolve("Created successfully");
+                    const user1 = await this.getuser(id);
+                    resolve(user1);
                   }
                   else {
                     resolve("Database down!");
@@ -114,15 +139,17 @@ class UserModel {
           });
       }
       db.query("INSERT INTO user (u_name, login, balance, u_password) VALUES (?,?,?,?)",
-        [name, login, balance, pass], (err, result) => {
+        [name, login, balance, pass], async (err, result) => {
           if (!err) {
-            resolve("Created successfully");
+            const user1 = await this.get_user_login(login, pass);
+            resolve(user1);
           }
           else {
-            db2.query("INSERT INTO user (u_name, login, balance, u_password) VALUES (?,?,?,?,?)",
-              [name, login, balance, pass], (err, result) => {
+            db2.query("INSERT INTO user (u_name, login, balance, u_password) VALUES (?,?,?,?)",
+              [name, login, balance, pass], async (err, result) => {
                 if (!err) {
-                  resolve("Created successfully");
+                  const user1 = await this.get_user_login(login, pass);
+                  resolve(user1);
                 }
                 else {
                   resolve("Database down!");
@@ -157,7 +184,7 @@ class UserModel {
           });
         }
       });
-    })
+    });
   }
   static async edit_cash(login, pass, balance, deposit_withdraw) {
     return new Promise(async resolve => {
@@ -167,13 +194,13 @@ class UserModel {
         resolve(login_user_result);
       }
       else if (login_user_result == "Login successfully") {
-        const user1 = await this.getuser(0, login);
+        const user1 = await this.get_user_login(login, pass);
         let new_balance;
         if (deposit_withdraw) {
-          new_balance = user1[0].balance + balance;
+          new_balance = user1.balance + balance;
         }
         else {
-          new_balance = user1[0].balance - balance;
+          new_balance = user1.balance - balance;
         }
         db.query("UPDATE user SET balance=? WHERE login=?", [new_balance, login],
           (err, result) => {
@@ -187,7 +214,7 @@ class UserModel {
                 });
             }
           });
-        const new_user = await this.getuser(0, login);
+        const new_user = await this.get_user_login(login, pass);
         resolve(new_user);
       }
     });
@@ -200,13 +227,13 @@ class UserModel {
         resolve(login_user_result);
       }
       else if (login_user_result == "Login successfully") {
-        const user1 = await this.getuser(0, login);
-        db.query("select * from item WHERE item_uid!=?", [user1[0].uid], (error, result) => {
+        const user1 = await this.get_user_login(login, pass);
+        db.query("select * from item WHERE item_uid!=?", [user1.uid], (error, result) => {
           if (!error) {
             if (result.length) resolve(result);
             resolve("No items found!");
           }
-          db2.query("select * from item WHERE item_uid!=?", [user1[0].uid], (error, result) => {
+          db2.query("select * from item WHERE item_uid!=?", [user1.uid], (error, result) => {
             if (!error) {
               if (result.length) resolve(result);
               resolve("No items found!");
@@ -225,21 +252,25 @@ class UserModel {
         resolve(login_user_result);
       }
       else if (login_user_result == "Login successfully") {
-        const user1 = await this.getuser(0, login);
+        const user1 = await this.get_user_login(login, pass);
         const item1 = await itemModel.item(item_id);
-        const user2 = await this.getuser(item1[0].item_uid, null);
-        if (item1[0].item_state == "sold") {
+        const user2 = await this.getuser(item1.item_uid);
+        if (item1.item_state == "sold") {
           resolve("item sold!");
           return;
         }
-        else if (item1[0].item_price > user1[0].balance){
+        else if (item1.item_price > user1.balance) {
           resolve("Not enough balance");
           return;
         }
-        const new_item1 = await itemModel.edit_item(item1[0].item_id, false, false, "sold", false, "now", user1[0].uid);
-        const new_balance1 = await this.edit_cash(login, pass, item1[0].item_price, false);
-        const new_balance2 = await this.edit_cash(user2[0].login, user2[0].u_password, item1[0].item_price, true);
-        resolve([new_item1[0], new_balance1[0], new_balance2[0]]);
+        else if (user1.uid == user2.uid) {
+          resolve("You can't buy your own items");
+          return;
+        }
+        const new_item1 = await itemModel.reset_item(item1.item_id, "sold", "now", user1.uid);
+        const new_balance1 = await this.edit_cash(login, pass, item1.item_price, false);
+        const new_balance2 = await this.edit_cash(user2.login, user2.u_password, item1.item_price, true);
+        resolve([new_item1, new_balance1, new_balance2]);
       }
     });
   }
@@ -251,23 +282,23 @@ class UserModel {
         resolve(login_user_result);
       }
       else if (login_user_result == "Login successfully") {
-        const user1 = await this.getuser(0, login);
+        const user1 = await this.get_user_login(login, pass);
         let list1 = [];
-        let sell_items = await itemModel.get_user_items(user1[0].uid);
-        let purchased_items = await itemModel.get_user_purchased_items(user1[0].uid);
-        list1.push(user1[0]);
+        let sell_items = await itemModel.get_user_items(user1.uid);
+        let purchased_items = await itemModel.get_user_purchased_items(user1.uid);
+        list1.push(user1);
         list1.push(sell_items);
         list1.push(purchased_items);
         resolve(list1);
       }
     });
   }
-  static async deluser(id, login) {
+  static async deluser(id, login, password) {
     return new Promise(async resolve => {
       let exist = await this.checkuser(id, login);
       if (!exist) resolve("User dosn't exist")
-      const user1 = this.getuser(id, login);
-      if (id)
+      if (id) {
+        const user1 = this.getuser(id);
         db.query("DELETE FROM user where uid=?", [id], (err, result) => {
           if (!err) {
             resolve(user1);
@@ -283,21 +314,32 @@ class UserModel {
             });
           }
         });
-      db.query("DELETE FROM user where login=?", [login], (err, result) => {
-        if (!err) {
+      }
+      else {
+        let arr = ["Database down!", "Wrong login", "Wrong password"];
+        const user1 = this.get_user_login(login, password);
+        if (arr.includes(user1)) {
           resolve(user1);
+          return;
         }
         else {
-          db2.query("DELETE FROM user where login=?", [login], (err, result) => {
+          db.query("DELETE FROM user where login=?", [login], (err, result) => {
             if (!err) {
               resolve(user1);
             }
             else {
-              resolve("Database down!");
+              db2.query("DELETE FROM user where login=?", [login], (err, result) => {
+                if (!err) {
+                  resolve(user1);
+                }
+                else {
+                  resolve("Database down!");
+                }
+              });
             }
           });
         }
-      });
+      }
     });
   }
 }
